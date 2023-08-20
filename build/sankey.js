@@ -1,4 +1,7 @@
-d3.sankey = () => {
+import * as d3 from 'd3'
+import {OUT, IN} from './constants.js'
+
+export default function () {
   'use strict';
 
   const sankey = {},
@@ -9,74 +12,107 @@ d3.sankey = () => {
 
   // Set by inputs:
   let nodeWidth = 9,
-      nodeHeightFactor = 0.5,
-      nodeSpacingFactor = 0.85,
-      size = { w: 1, h: 1 },
-      nodes = [],
-      flows = [],
-      rightJustifyEndpoints = false,
-      leftJustifyOrigins = false,
-      autoLayout = true,
-      attachIncompletesTo = NEAREST,
-      // Calculated:
-      stagesArr = [],
-      maximumNodeSpacing = 0,
-      actualNodeSpacing = 0,
-      furthestStage = 0;
+    nodeHeightFactor = 0.5,
+    nodeSpacingFactor = 0.85,
+    size = {w: 1, h: 1},
+    nodes = [],
+    flows = [],
+    rightJustifyEndpoints = false,
+    leftJustifyOrigins = false,
+    autoLayout = true,
+    attachIncompletesTo = NEAREST,
+    // Calculated:
+    stagesArr = [],
+    maximumNodeSpacing = 0,
+    actualNodeSpacing = 0,
+    furthestStage = 0;
 
   // ACCESSORS //
   /* eslint-disable func-names */
   sankey.nodeWidth = function (x) {
-    if (arguments.length) { nodeWidth = +x; return sankey; }
+    if (arguments.length) {
+      nodeWidth = +x;
+      return sankey;
+    }
     return nodeWidth;
   };
 
   sankey.nodeHeightFactor = function (x) {
-    if (arguments.length) { nodeHeightFactor = +x; return sankey; }
+    if (arguments.length) {
+      nodeHeightFactor = +x;
+      return sankey;
+    }
     return nodeHeightFactor;
   };
 
   sankey.nodeSpacingFactor = function (x) {
-    if (arguments.length) { nodeSpacingFactor = +x; return sankey; }
+    if (arguments.length) {
+      nodeSpacingFactor = +x;
+      return sankey;
+    }
     return nodeSpacingFactor;
   };
 
   sankey.nodes = function (x) {
-    if (arguments.length) { nodes = x; return sankey; }
+    if (arguments.length) {
+      nodes = x;
+      return sankey;
+    }
     return nodes;
   };
 
   sankey.flows = function (x) {
-    if (arguments.length) { flows = x; return sankey; }
+    if (arguments.length) {
+      flows = x;
+      return sankey;
+    }
     return flows;
   };
 
   sankey.size = function (x) {
-    if (arguments.length) { size = x; return sankey; }
+    if (arguments.length) {
+      size = x;
+      return sankey;
+    }
     return size;
   };
 
- sankey.rightJustifyEndpoints = function (x) {
-  if (arguments.length) { rightJustifyEndpoints = x; return sankey; }
-  return rightJustifyEndpoints;
+  sankey.rightJustifyEndpoints = function (x) {
+    if (arguments.length) {
+      rightJustifyEndpoints = x;
+      return sankey;
+    }
+    return rightJustifyEndpoints;
   };
 
   sankey.leftJustifyOrigins = function (x) {
-    if (arguments.length) { leftJustifyOrigins = x; return sankey; }
+    if (arguments.length) {
+      leftJustifyOrigins = x;
+      return sankey;
+    }
     return leftJustifyOrigins;
   };
 
   sankey.autoLayout = function (x) {
-    if (arguments.length) { autoLayout = x; return sankey; }
+    if (arguments.length) {
+      autoLayout = x;
+      return sankey;
+    }
     return autoLayout;
   };
 
   sankey.attachIncompletesTo = function (x) {
     if (arguments.length) {
       switch (x.toLowerCase()) {
-        case 'leading': attachIncompletesTo = TOP; break;
-        case 'trailing': attachIncompletesTo = BOTTOM; break;
-        case 'nearest': attachIncompletesTo = NEAREST; break;
+        case 'leading':
+          attachIncompletesTo = TOP;
+          break;
+        case 'trailing':
+          attachIncompletesTo = BOTTOM;
+          break;
+        case 'nearest':
+          attachIncompletesTo = NEAREST;
+          break;
         // no default
       }
       return sankey;
@@ -90,34 +126,68 @@ d3.sankey = () => {
   // FUNCTIONS //
 
   // valueSum: Add up all the 'value' keys from a list of objects:
-  function valueSum(list) { return d3.sum(list, (d) => d.value); }
+  function valueSum(list) {
+    return d3.sum(list, (d) => d.value);
+  }
 
   // yCenter & yBottom: Y-position of the middle and end of a node.
-  function yCenter(n) { return n.y + n.dy / 2; }
-  function yBottom(n) { return n.y + n.dy; }
+  function yCenter(n) {
+    return n.y + n.dy / 2;
+  }
+
+  function yBottom(n) {
+    return n.y + n.dy;
+  }
 
   // source___/target___: return the ___ of one end of a flow:
-  function sourceTop(f) { return f.source.y + f.sy; }
-  function targetTop(f) { return f.target.y + f.ty; }
-  function sourceCenter(f) { return f.source.y + f.sy + (f.dy / 2); }
-  function targetCenter(f) { return f.target.y + f.ty + (f.dy / 2); }
-  function sourceBottom(f) { return f.source.y + f.sy + f.dy; }
-  function targetBottom(f) { return f.target.y + f.ty + f.dy; }
+  function sourceTop(f) {
+    return f.source.y + f.sy;
+  }
+
+  function targetTop(f) {
+    return f.target.y + f.ty;
+  }
+
+  function sourceCenter(f) {
+    return f.source.y + f.sy + (f.dy / 2);
+  }
+
+  function targetCenter(f) {
+    return f.target.y + f.ty + (f.dy / 2);
+  }
+
+  function sourceBottom(f) {
+    return f.source.y + f.sy + f.dy;
+  }
+
+  function targetBottom(f) {
+    return f.target.y + f.ty + f.dy;
+  }
 
   // Get the extreme bounds across a list of Nodes:
-  function leastY(nodeList) { return d3.min(nodeList, (n) => n.y); }
-  function greatestY(nodeList) { return d3.max(nodeList, (n) => yBottom(n)); }
+  function leastY(nodeList) {
+    return d3.min(nodeList, (n) => n.y);
+  }
+
+  function greatestY(nodeList) {
+    return d3.max(nodeList, (n) => yBottom(n));
+  }
 
   // Sorting functions:
-  function bySourceOrder(a, b) { return a.sourceRow - b.sourceRow; }
-  function byTopEdges(a, b) { return a.y - b.y; }
+  function bySourceOrder(a, b) {
+    return a.sourceRow - b.sourceRow;
+  }
+
+  function byTopEdges(a, b) {
+    return a.y - b.y;
+  }
 
   // connectFlowsToNodes: Populate flows in & out for each node.
   function connectFlowsToNodes() {
     // Initialize the flow buckets:
     nodes.forEach((n) => {
       // Lists of flows which use this node as their target or source:
-      n.flows = { [IN]: [], [OUT]: [] };
+      n.flows = {[IN]: [], [OUT]: []};
       // Mark these as real nodes we want to see:
       n.isAShadow = false;
     });
@@ -126,8 +196,12 @@ d3.sankey = () => {
     flows.forEach((f) => {
       // When the source or target is a number, that's an index;
       // convert it to the referenced object:
-      if (typeof f.source === 'number') { f.source = nodes[f.source]; }
-      if (typeof f.target === 'number') { f.target = nodes[f.target]; }
+      if (typeof f.source === 'number') {
+        f.source = nodes[f.source];
+      }
+      if (typeof f.target === 'number') {
+        f.target = nodes[f.target];
+      }
 
       // Add this flow to the affected source & target:
       f.source.flows[OUT].push(f);
@@ -145,7 +219,7 @@ d3.sankey = () => {
   function computeNodeValues() {
     nodes.forEach((n) => {
       // Remember the totals in & out:
-      n.total = { [IN]: valueSum(n.flows[IN]), [OUT]: valueSum(n.flows[OUT]) };
+      n.total = {[IN]: valueSum(n.flows[IN]), [OUT]: valueSum(n.flows[OUT])};
       // Each node's value will be the greater of the two:
       n.value = Math.max(n.total[IN], n.total[OUT]);
     });
@@ -160,13 +234,13 @@ d3.sankey = () => {
       // Get every flow touching one side & treat them as one list:
       const flowList
         = nodeList
-            .map((n) => n.flows[whichFlows])
-            .flat()
-            // Use the weighted value of a flow (this handles shadows):
-            .filter((f) => f.weightedValue > 0);
+        .map((n) => n.flows[whichFlows])
+        .flat()
+        // Use the weighted value of a flow (this handles shadows):
+        .filter((f) => f.weightedValue > 0);
       // If 0 flows, return enough structure to satisfy the caller:
       if (flowList.length === 0) {
-        return { value: 0, sources: { weight: 0 }, targets: { weight: 0 } };
+        return {value: 0, sources: {weight: 0}, targets: {weight: 0}};
       }
 
       return {
@@ -183,7 +257,7 @@ d3.sankey = () => {
     }
 
     // Return the stats for the set of all flows touching these nodes:
-    return { [IN]: flowSetStats(IN), [OUT]: flowSetStats(OUT) };
+    return {[IN]: flowSetStats(IN), [OUT]: flowSetStats(OUT)};
   }
 
   // placeFlowsInsideNodes(nodeList):
@@ -219,25 +293,27 @@ d3.sankey = () => {
         //     own center.
         flowPosition
           = totalFlowValue < n.value
-            && (attachIncompletesTo === BOTTOM
-                || (attachIncompletesTo === NEAREST
-                    && totalFlowWeight / totalFlowValue > yCenter(n)))
-              ? BOTTOM
-              : TOP,
+        && (attachIncompletesTo === BOTTOM
+          || (attachIncompletesTo === NEAREST
+            && totalFlowWeight / totalFlowValue > yCenter(n)))
+          ? BOTTOM
+          : TOP,
         // upper/lower bounds = the range where flows may attach
         bounds
           = flowPosition === TOP
-            ? { upper: n.y, lower: n.y + totalFlowSpan }
-            : { upper: yBottom(n) - totalFlowSpan, lower: yBottom(n) };
-        // Reminder: In SVG-land, y-axis coordinates are inverted...
-        //   "upper" & "lower" are meant visually here, not numerically.
+          ? {upper: n.y, lower: n.y + totalFlowSpan}
+          : {upper: yBottom(n) - totalFlowSpan, lower: yBottom(n)};
+      // Reminder: In SVG-land, y-axis coordinates are inverted...
+      //   "upper" & "lower" are meant visually here, not numerically.
 
       // placeFlow(f, y): Update a flow's position
       function placeFlow(f, newTopY) {
         // Is the flow actually in the queue? Exit if not. (This can happen
         // when we're placing a shadow flow and offer to update the original
         // flow's Y, but it's in some other stage.)
-        if (!flowsRemaining.has(f.index)) { return; }
+        if (!flowsRemaining.has(f.index)) {
+          return;
+        }
         // sy & ty (source/target y) are the vertical *offsets* at each end
         // of a flow, determining where below the node's top edge the flow's
         // top will meet.
@@ -258,12 +334,16 @@ d3.sankey = () => {
         if (edge === TOP) {
           newY = bounds.upper;
           // If this is real, move the upper bound DOWN.
-          if (f.useForVisiblePlacing || n.isAShadow) { bounds.upper += f.dy; }
+          if (f.useForVisiblePlacing || n.isAShadow) {
+            bounds.upper += f.dy;
+          }
         } else { // edge === BOTTOM
           // Make room at the bottom of the range for this flow:
           newY = bounds.lower - f.dy;
           // If this is real, move the lower bound UP to match:
-          if (f.useForVisiblePlacing || n.isAShadow) { bounds.lower = newY; }
+          if (f.useForVisiblePlacing || n.isAShadow) {
+            bounds.lower = newY;
+          }
         }
 
         // Put the flow where we just decided & drop it from the queue:
@@ -279,10 +359,10 @@ d3.sankey = () => {
 
       // slopeData keys are the product of an 'edge' & a 'placing' value:
       const slopeData = {
-        [TOP * TARGETS]: { f: (f) => (bounds.upper - sourceTop(f)) / f.dx, dir: -1 },
-        [TOP * SOURCES]: { f: (f) => (targetTop(f) - bounds.upper) / f.dx, dir: 1 },
-        [BOTTOM * TARGETS]: { f: (f) => (bounds.lower - sourceBottom(f)) / f.dx, dir: 1 },
-        [BOTTOM * SOURCES]: { f: (f) => (targetBottom(f) - bounds.lower) / f.dx, dir: -1 },
+        [TOP * TARGETS]: {f: (f) => (bounds.upper - sourceTop(f)) / f.dx, dir: -1},
+        [TOP * SOURCES]: {f: (f) => (targetTop(f) - bounds.upper) / f.dx, dir: 1},
+        [BOTTOM * TARGETS]: {f: (f) => (bounds.lower - sourceBottom(f)) / f.dx, dir: 1},
+        [BOTTOM * SOURCES]: {f: (f) => (targetBottom(f) - bounds.lower) / f.dx, dir: -1},
       };
 
       // placeUnhappiestFlowAt(edge):
@@ -290,7 +370,9 @@ d3.sankey = () => {
       //   edge = TOP or BOTTOM
       function placeUnhappiestFlowAt(edge) {
         // The queue may have been drained early. Guard against that:
-        if (!flowsRemaining.size) { return; }
+        if (!flowsRemaining.size) {
+          return;
+        }
         const sKey = edge * placing,
           slopeOf = slopeData[sKey].f,
           // flowIndex = the ID of the unhappiest flow
@@ -308,7 +390,9 @@ d3.sankey = () => {
                 || flows[a].sourceRow - flows[b].sourceRow
             )[0];
         // If we found a flow, place it at the correct edge:
-        if (flowIndex !== undefined) { placeFlowAt(edge, flowIndex); }
+        if (flowIndex !== undefined) {
+          placeFlowAt(edge, flowIndex);
+        }
       }
 
       // Loop through the flow set, placing them from the outside in.
@@ -343,12 +427,12 @@ d3.sankey = () => {
     const flowBatches = [
       ...nodeList.filter((n) => n.flows[IN].length)
         .map((n) => (
-          { i: n.index, len: n.flows[IN].length, placing: TARGETS }
-          )),
+          {i: n.index, len: n.flows[IN].length, placing: TARGETS}
+        )),
       ...nodeList.filter((n) => n.flows[OUT].length)
         .map((n) => (
-          { i: n.index, len: n.flows[OUT].length, placing: SOURCES }
-          )),
+          {i: n.index, len: n.flows[OUT].length, placing: SOURCES}
+        )),
     ];
 
     // Sort the flow batches so that we start with those having the FEWEST
@@ -358,7 +442,9 @@ d3.sankey = () => {
     // wild possibilities for how they may be arranged.
     flowBatches.sort((a, b) => a.len - b.len)
       // Finally: Go through every batch & sort its flows anew:
-      .forEach((fBatch) => { sortFlows(nodes[fBatch.i], fBatch.placing); });
+      .forEach((fBatch) => {
+        sortFlows(nodes[fBatch.i], fBatch.placing);
+      });
   }
 
   // assignNodesToStages: Iteratively assign the stage (x-group) for each node.
@@ -367,15 +453,17 @@ d3.sankey = () => {
   // Nodes with no outgoing flows are assigned the maximum stage.
   function assignNodesToStages() {
     let remainingNodes = nodes,
-        nextNodes = [];
+      nextNodes = [];
 
     // This node needs a stage assigned/updated.
     function updateNode(n) {
-        n.stage = furthestStage;
-        // Make sure its targets will be seen again:
-        // (Only add it to the nextNodes list if it is not already present)
-        n.flows[OUT].filter((f) => !nextNodes.includes(f.target))
-          .forEach((f) => { nextNodes.push(f.target); });
+      n.stage = furthestStage;
+      // Make sure its targets will be seen again:
+      // (Only add it to the nextNodes list if it is not already present)
+      n.flows[OUT].filter((f) => !nextNodes.includes(f.target))
+        .forEach((f) => {
+          nextNodes.push(f.target);
+        });
     }
 
     function moveOriginsRight() {
@@ -392,7 +480,9 @@ d3.sankey = () => {
       // If any node is not the source for any others, then it's a dead-end;
       // move it all the way to the right of the diagram:
       nodes.filter((n) => !n.flows[OUT].length)
-        .forEach((n) => { n.stage = furthestStage - 1; });
+        .forEach((n) => {
+          n.stage = furthestStage - 1;
+        });
     }
 
     // Work from left to right.
@@ -407,16 +497,22 @@ d3.sankey = () => {
 
     // Force origins to appear immediately before their first target node?
     // (In this case, we have to do extra work to UN-justify these nodes.)
-    if (!leftJustifyOrigins) { moveOriginsRight(); }
+    if (!leftJustifyOrigins) {
+      moveOriginsRight();
+    }
 
     // Force endpoint nodes all the way to the right?
     // Note: furthestStage at this point is 1 beyond the last actual stage:
-    if (rightJustifyEndpoints) { moveSinksRight(); }
+    if (rightJustifyEndpoints) {
+      moveSinksRight();
+    }
 
     // Now that the main nodes and flows are in place, we also fill in
     // SHADOW nodes & flows to occupy space whenever stages are skipped.
     // To get started, fill in the 'ds' (stage distance) for all flows:
-    flows.forEach((f) => { f.ds = f.target.stage - f.source.stage; });
+    flows.forEach((f) => {
+      f.ds = f.target.stage - f.source.stage;
+    });
 
     // Next, operate on flows which cross more than one stage:
     const shadowNodeNames = new Map();
@@ -450,8 +546,8 @@ d3.sankey = () => {
               name: newNodeName,
               sourceRow: f.sourceRow,
               isAShadow: true,
-              flows: { [IN]: [], [OUT]: [] },
-              total: { [IN]: fVal, [OUT]: fVal },
+              flows: {[IN]: [], [OUT]: []},
+              total: {[IN]: fVal, [OUT]: fVal},
               value: fVal,
             };
             // Add this to the big list and to our shadow-tracking list:
@@ -484,7 +580,7 @@ d3.sankey = () => {
               // flow? Only at the ends of the shadow path.
               useForVisiblePlacing:
                 sourceNode.stage === f.source.stage
-                  || targetNode.stage === f.target.stage,
+                || targetNode.stage === f.target.stage,
             };
           flows.push(newFlow);
           newFlow.source.flows[OUT].push(newFlow);
@@ -495,7 +591,7 @@ d3.sankey = () => {
         // tell f itself that Things have Changed:
         f.useForVisiblePlacing = false;
         f.hasAShadow = true;
-    });
+      });
   }
 
   // Set up stagesArr: one array element for each stage, containing that
@@ -553,16 +649,16 @@ d3.sankey = () => {
         //   allAvailablePadding / (# of spaces in the busiest stage)
         maximumNodeSpacing
           = ((1 - nodeHeightFactor) * allAvailablePadding)
-            / (greatestNodeCount - 1);
+          / (greatestNodeCount - 1);
         actualNodeSpacing = maximumNodeSpacing * nodeSpacingFactor;
         // Finally, calculate the vertical scaling factor for all
         // nodes, given maximumNodeSpacing & the diagram's height:
         ky
           = d3.min(
-            stagesArr,
-            (s) => (size.h - (s.length - 1) * maximumNodeSpacing)
-              / valueSum(s)
-          );
+          stagesArr,
+          (s) => (size.h - (s.length - 1) * maximumNodeSpacing)
+            / valueSum(s)
+        );
       }
 
       // Compute all the dy & weighted values using the now-known scale
@@ -572,7 +668,9 @@ d3.sankey = () => {
         f.weightedValue = f.hasAShadow ? 0 : f.value;
       });
       // Also: Ensure each node is at least 1 pixel tall:
-      nodes.forEach((n) => { n.dy = Math.max(1, n.value * ky); });
+      nodes.forEach((n) => {
+        n.dy = Math.max(1, n.value * ky);
+      });
 
       // Set the initial positions of all nodes.
       // The initial stage will start with all nodes centered vertically,
@@ -603,9 +701,9 @@ d3.sankey = () => {
         // letting it be placed where the stage will exceed either boundary):
         let nextNodePos
           = Math.max(
-              0,
-              Math.min(targetY - (stageSize / 2), size.h - stageSize)
-              );
+          0,
+          Math.min(targetY - (stageSize / 2), size.h - stageSize)
+        );
         s.forEach((n) => {
           n.y = nextNodePos;
           // Find the y position of the next node:
@@ -617,8 +715,8 @@ d3.sankey = () => {
       // Apply a scaling factor based on width per stage:
       const widthPerStage
         = furthestStage > 1
-          ? (size.w - nodeWidth) / (furthestStage - 1)
-          : 0;
+        ? (size.w - nodeWidth) / (furthestStage - 1)
+        : 0;
       nodes.forEach((n) => {
         n.x = widthPerStage * n.stage;
         n.dx = nodeWidth;
@@ -638,14 +736,16 @@ d3.sankey = () => {
           if (f.isAShadow && !n.isAShadow) {
             f.sy = flows[f.shadowOf].sy;
           } else {
-            f.sy = sy; sy += f.dy;
+            f.sy = sy;
+            sy += f.dy;
           }
         });
         n.flows[IN].forEach((f) => {
           if (f.isAShadow && !n.isAShadow) {
             f.ty = flows[f.shadowOf].ty;
           } else {
-            f.ty = ty; ty += f.dy;
+            f.ty = ty;
+            ty += f.dy;
           }
         });
       });
@@ -662,7 +762,9 @@ d3.sankey = () => {
         totalOut = fStats[OUT].value;
       // If there are no flows touching *either* side here, there's nothing
       // to offset ourselves relative to, so we can exit early:
-      if (totalIn === 0 && totalOut === 0) { return 0; }
+      if (totalIn === 0 && totalOut === 0) {
+        return 0;
+      }
 
       const nStats = nodeSetStats(nodeList),
         // projectedSourceCenter =
@@ -674,14 +776,14 @@ d3.sankey = () => {
         // exactly equivalent to: *the weighted center of all sources*.
         projectedSourceCenter
           = (nStats.weight - fStats[IN].targets.weight + fStats[IN].sources.weight)
-            / nStats.value,
+          / nStats.value,
         // projectedTargetCenter = the same idea in the other direction:
         //   current Node group's weighted center
         //     - outgoing weights' center
         //     + final center of those weights
         projectedTargetCenter
           = (nStats.weight - fStats[OUT].sources.weight + fStats[OUT].targets.weight)
-            / nStats.value;
+          / nStats.value;
 
       // Time to do the positioning calculations.
       let goalY = 0;
@@ -699,12 +801,12 @@ d3.sankey = () => {
           stageDistance = endStage - startStage,
           slopeBetweenCenters
             = stageDistance !== 0 // Avoid divide-by-0 error
-              ? (projectedTargetCenter - projectedSourceCenter) / stageDistance
-              : 0;
+            ? (projectedTargetCenter - projectedSourceCenter) / stageDistance
+            : 0;
         // Where along that line should this current group be centered?
         goalY
           = projectedSourceCenter
-            + (nStats.stage - startStage) * slopeBetweenCenters;
+          + (nStats.stage - startStage) * slopeBetweenCenters;
       }
 
       // We have a goal Y value! Return the offset from the current center:
@@ -725,7 +827,9 @@ d3.sankey = () => {
         let yPos = 0; // = the current available y closest to the top
         s.forEach((n) => {
           // If this node's top is above yPos, nudge the node down:
-          if (n.y < yPos) { n.y = yPos; }
+          if (n.y < yPos) {
+            n.y = yPos;
+          }
           // Set yPos to the next available y toward the bottom:
           yPos = yBottom(n) + actualNodeSpacing;
         });
@@ -734,7 +838,9 @@ d3.sankey = () => {
         yPos = size.h; // = the current available y closest to the bottom
         s.slice().reverse().forEach((n) => {
           // if this node's bottom is below yPos, nudge it up:
-          if (yBottom(n) > yPos) { n.y = yPos - n.dy; }
+          if (yBottom(n) > yPos) {
+            n.y = yPos - n.dy;
+          }
           // Set yPos to the next available y toward the top:
           yPos = n.y - actualNodeSpacing;
         });
@@ -770,10 +876,12 @@ d3.sankey = () => {
         // line:
         neighborGroups.filter((g) => g.length > 1)
           .forEach((nodeGroup) => {
-          // Apply the offset to the entire node group:
-          const yOffset = findNodeGroupOffset(nodeGroup);
-          nodeGroup.forEach((n) => { n.y += yOffset; });
-        });
+            // Apply the offset to the entire node group:
+            const yOffset = findNodeGroupOffset(nodeGroup);
+            nodeGroup.forEach((n) => {
+              n.y += yOffset;
+            });
+          });
       }
 
       // First, sort this stage's nodes based on either their current
@@ -806,7 +914,9 @@ d3.sankey = () => {
     function processStages(stageList, factor) {
       stageList.forEach((s) => {
         // Move each node to its ideal vertical position:
-        s.forEach((n) => { n.y += findNodeGroupOffset([n]) * factor; });
+        s.forEach((n) => {
+          n.y += findNodeGroupOffset([n]) * factor;
+        });
         // Update this stage's node positions to incorporate their proximity
         // & required spacing *now*, since they'll be used as the basis for
         // weights in the very next stage:
@@ -827,10 +937,12 @@ d3.sankey = () => {
     // then offset ALL Nodes' y positions to center the diagram:
     function reCenterDiagram() {
       const minY = leastY(nodes),
-          yH =  greatestY(nodes) - minY;
+        yH = greatestY(nodes) - minY;
       if (yH < size.h) {
         const yOffset = (size.h / 2) - (minY + (yH / 2));
-        nodes.forEach((n) => { n.y += yOffset; });
+        nodes.forEach((n) => {
+          n.y += yOffset;
+        });
       }
     }
 
@@ -838,7 +950,9 @@ d3.sankey = () => {
 
     initializeNodePositions();
     // Resolve all collisions/spacing & place all flows to start:
-    stagesArr.forEach((s) => { updateStageCentering(s); });
+    stagesArr.forEach((s) => {
+      updateStageCentering(s);
+    });
     placeFlowsInsideNodes(nodes);
 
     let [alpha, counter] = [1, 0];
@@ -855,9 +969,9 @@ d3.sankey = () => {
     // After the last layout adjustment, remember these node coordinates
     // (for reference when the user is dragging nodes):
     nodes.forEach((n) => {
-        n.origPos = { x: n.x, y: n.y };
-        n.lastPos = { x: n.x, y: n.y };
-        n.move = [0, 0];
+      n.origPos = {x: n.x, y: n.y};
+      n.lastPos = {x: n.x, y: n.y};
+      n.move = [0, 0];
     });
   }
 
@@ -890,6 +1004,3 @@ d3.sankey = () => {
 
   return sankey;
 };
-
-// Make the linter happy about imported objects:
-/* global d3 IN OUT */
