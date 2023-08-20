@@ -13,71 +13,9 @@
 
 <script type="module">
   import sankey from './bundle.js'
-
-  sankey(`
-Wages [1500] Budget
-Other [250] Budget
-
-Budget [450] Taxes
-Budget [420] Housing
-Budget [400] Food
-Budget [295] Transportation
-Budget [25] Savings
-
-// You can set a Node's color, like this:
-:Budget #708090
-//            ...or a color for a single Flow:
-Budget [160] Other Necessities #0F0
-
-// Use the controls below to customize
-// your diagram's appearance...
-
-// === Settings ===
-
-size w 600
-  h 600
-margin l 12
-  r 12
-  t 18
-  b 20
-bg color #ffffff
-  transparent N
-node w 9
-  h 50
-  spacing 85
-  border 0
-  theme b
-  color #888888
-  opacity 1
-flow curvature 0.5
-  inheritfrom outside-in
-  color #999999
-  opacity 0.45
-layout order automatic
-  justifyorigins N
-  justifyends N
-  reversegraph N
-  attachincompletesto nearest
-labels color #000000
-  highlight 0.55
-  fontface sans-serif
-labelname appears Y
-  size 16
-  weight 400
-labelvalue appears Y
-  fullprecision Y
-labelposition first before
-  breakpoint 4
-value format ',.'
-  prefix ''
-  suffix ''
-themeoffset a 6
-  b 5
-  c 0
-  d 0
-meta mentionsankeymatic Y
-  listimbalances Y
-`, {})
+  fetch('/budget.sk')
+    .then(response => response.text())
+    .then(text => sankey(text, {}))
 </script>
 </body>
 </html>
